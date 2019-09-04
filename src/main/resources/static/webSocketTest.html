@@ -1,0 +1,150 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>My WebSocket</title>
+
+    <script src="js/sockjs.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/stomp.min.js"></script>
+    <!--<script type="text/javascript"></script>-->
+
+    <style>
+        #message22{
+            margin-top:40px;
+            border:1px solid gray;
+            padding:20px;
+        }
+    </style>
+
+    <style>
+        #message{
+            margin-top:40px;
+            border:1px solid gray;
+            padding:20px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+频道号：<input id="room" type="text"/>
+<button onclick="conectWebSocket()">连接WebSocket</button>
+<button onclick="disconnect()">断开连接</button>
+<hr />
+
+<div id="message22"></div>
+
+
+<br />
+做题区：<input id="text" type="text" />
+<!-- 频道号：<input id="toUser" type="text" /> -->
+<button onclick="sendMessage()">发送消息</button>
+<div id="message"></div>
+</body>
+
+<script type="text/javascript">
+    var stompClient;
+
+    var serverUrl = "http://localhost:8080/websocket";
+
+    var room;//频道号
+
+
+    var websocket = null;
+
+    //websocket连接
+    function conectWebSocket(){
+
+        this.room = document.getElementById('room').value;//频道号
+
+        console.log(this.room);
+
+        console.log(this.serverUrl);
+
+        var socket = new SockJS(this.serverUrl);
+        this.stompClient = Stomp.over(socket);
+        var that = this;
+          this.stompClient.connect({}, function (frame) {
+              that.stompClient.subscribe('/topic/'+that.room ,function(txt) {
+                  // console.log("websocket连接成功");
+                  // console.log(txt);
+                  document.getElementById('
+                  ').innerHTML += JSON.parse(txt.body)['content']+ '<br/>';
+                  // const sender = JSON.parse(message.body)['sender'];
+////                const language = JSON.parse(message.body)['language'];
+////                const content = JSON.parse(message.body)['content'];
+////                const type = JSON.parse(message.body)['type'];
+              });
+          });
+
+
+     }
+
+     //发送消息
+    function sendMessage() {
+        //获取输入的文本信息进行发送
+        var message = document.getElementById('text').value;
+        // var room = document.getElementById('toUser').value;
+        var socketMsg = {msg:message,toUser:room};
+        var that = this
+        this.stompClient.send(
+            '/app/chat',
+            {},
+            JSON.stringify({
+                'room': that.room,
+                'type': "1",//1,2
+                'content': message,
+                'userId':"566072523",//小明
+                'questionId':"222299023",//题目1
+                'createTime':"",
+                 })
+        );
+
+    }
+
+    function getUserAllQuestions() {
+//        var formdata = new FormData(uploadForm);
+//        formdata.append("username",$("#username").val());
+        $.ajax({
+            type: "GET",
+            url:"http://localhost:8080/getSelfQuestions?token=eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiLlsI_nuqIiLCJyb2xlIjoiUk9MRV9VU0VSIiwiY3JlYXRlZCI6MTU1NTU1MzEyNTU5NSwiZXhwIjoxNTU2MTU3OTI1fQ.gtCl8bP8fZpuLPUSAarfrbx627x6hk1vw9SrCSmdNPSLGmSZjcIlITcJVdMlRAUrqyutIAzDrtTXtwdh1k1JXw",
+            dataType:"json",
+            data:"",
+
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                console.log(data);
+                document.getElementById('message22').innerHTML += data.data[0].subject + '<br/>';
+            },
+            error: function (msg) {
+                console.log(msg);
+            }
+        });
+    }
+
+    function disconnect() {
+
+         //断开连接的方法
+        if (this.stompClient !== undefined) {
+
+            this.stompClient.disconnect();
+            alert("Disconnected");
+        }else{
+            alert("当前没有连接websocket")
+        }
+        this.stompClient = undefined;
+        
+    }
+
+    window.onload = function(){
+        this.getUserAllQuestions()
+    }
+
+
+
+
+</script>
+</html>
